@@ -21,7 +21,7 @@ mongoose.connect(process.env.MONGO_URI, {
 		process.exit(1);
 	});
 
-// Schema & Model
+// Schema 
 const PostSchema = new mongoose.Schema({
 	title: { type: String, required: true },
 	content: { type: String, required: true },
@@ -30,15 +30,23 @@ const PostSchema = new mongoose.Schema({
 });
 const Post = mongoose.model('Post', PostSchema);
 
-// Routes
+const ContactSchema = new mongoose.Schema({
+	name: { type: String, required: true },
+	email: { type: String, required: true },
+	subject: String,
+	message: { type: String, required: true },
+	createdAt: { type: Date, default: Date.now }
+});
+const Contact = mongoose.model('Contact', ContactSchema);
 
-// Get all posts
+
+
 app.get('/api/posts', async (req, res) => {
 	const posts = await Post.find().sort({ createdAt: -1 });
 	res.json(posts);
 });
 
-// Create new post
+
 app.post('/api/posts', async (req, res) => {
 	try {
 		const { title, content, author } = req.body;
@@ -53,7 +61,7 @@ app.post('/api/posts', async (req, res) => {
 	}
 });
 
-// Get single post by ID
+
 app.get('/api/posts/:id', async (req, res) => {
 	try {
 		const post = await Post.findById(req.params.id);
@@ -64,6 +72,22 @@ app.get('/api/posts/:id', async (req, res) => {
 	}
 });
 
-// Start server
+app.post('/api/contact', async (req, res) => {
+	try {
+		const { name, email, subject, message } = req.body;
+		if (!name || !email || !message) {
+			return res.status(400).json({ message: "Name, email and message are required" });
+		}
+
+		const contact = new Contact({ name, email, subject, message });
+		await contact.save();
+
+		res.status(201).json({ message: "Message received successfully!" });
+	} catch (err) {
+		res.status(500).json({ message: "Failed to send message" });
+	}
+});
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
